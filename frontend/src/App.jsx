@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import './App.css'
-function App() {
-  const [count, setCount] = useState(0)
+import Head from './components/Head'
+import Footer  from './components/Footer'
+//import Home from './pages/Home'
+import Login from './pages/Login'
 
+function App() {
   return (
     <>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+      <div>
+        <Head/>
+        <Login/>
+        <Footer/>
       </div>
     </>
   )
 }
 
 export default App
-g

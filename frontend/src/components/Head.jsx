@@ -1,12 +1,13 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
 function Head (){
-  const [islogin,setIslogin] =useState(false);
-  const userId =1
-  const userName ='nohyh'
+  const{user} = useAuth();
+  const userName = user?.username || 'Profile';
+  const {isLogin} = useAuth();
     return (
     <>
-    {islogin?(
+    {!isLogin?(
     <nav className="navbar navbar-light">
       <div  className="container">
         <NavLink className="navbar-brand" to="/"> conduit</NavLink>
@@ -40,7 +41,7 @@ function Head (){
                         <i className='ion-gear-a'></i>&nbsp;Settings</NavLink>
                     </li>
                     <li className='nav-item'>
-                      <NavLink className="nav-link" to={`/profile/${userId}`}>
+                      <NavLink className="nav-link" to={`/profile/${userName}`}>
                         {userName}
                       </NavLink>
                     </li>

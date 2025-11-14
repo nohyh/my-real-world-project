@@ -7,7 +7,7 @@ function Home(){
     <>
     <div className="home-page">
         <div className="banner">
-             <h1 class="logo-font">conduit</h1>
+             <h1 className="logo-font">conduit</h1>
             <p>A place to share your knowledge.</p>
         </div>
     </div>
@@ -17,10 +17,10 @@ function Home(){
                 <div className="feed-toggle">
                     <ul className="nav nav-pills outline-active">
                         <li className="nav-item">
-                            <NavLink className="nav-link" to="/">Your Feed</NavLink>
+                            <NavLink className="nav-link" >Your Feed</NavLink>
                         </li>
                          <li className="nav-item">
-                            <NavLink className="nav-link" to="">Global Feed</NavLink>
+                            <NavLink className="nav-link">Global Feed</NavLink>
                         </li>
                     </ul>
                 </div>

@@ -1,30 +1,65 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import apiClient from '../apiClient';
+import { useQuery } from '@tanstack/react-query';
+import { mockArticle, mockComments } from '../data/mockData.js';
+
 function Article() {
+  const { user } = useAuth();
+  const userName = user?.username || '';
+  const { slug } = useParams();
+
+  const fetchArticle = async (slug) => {
+    if (import.meta.env.DEV && userName === 'test') {
+      return mockArticle;
+    }
+    const { data } = await apiClient.get(`/articles/${slug}`);
+    return data.article;
+  };
+
+  const {
+    data: article,
+    isLoading: isArticleLoading,
+    isError: isArticleError,
+  } = useQuery({
+    queryKey: ['article', slug],
+    queryFn: () => fetchArticle(slug),
+  });
+
+
+  if (isArticleLoading) {
+    return <div>Loading article...</div>;
+  }
+
+  if (isArticleError) {
+    return <div>Error loading article.</div>;
+  }
+
+  const isAuthor = userName === article.author.username;
   return (
     <div className="article-page">
       <div className="banner">
         <div className="container">
-          <h1>How to build webapps that scale</h1>
-
+          <h1>{article.title}</h1>
           <div className="article-meta">
-            <Link to="/profile/eric-simons">
+            <Link to={`/profile/${article.author.username}`}>
               <img src="http://i.imgur.com/Qr71crq.jpg" alt="Author Profile" />
             </Link>
             <div className="info">
-              <Link to="/profile/eric-simons" className="author">
-                Eric Simons
+              <Link to={`/profile/${article.author.username}`} className="author">
+                {article.author.username}
               </Link>
-              <span className="date">January 20th</span>
+              <span className="date">{new Date(article.createdAt).toDateString()}</span>
             </div>
             <button className="btn btn-sm btn-outline-secondary">
               <i className="ion-plus-round"></i>
-              &nbsp; Follow Eric Simons <span className="counter">(10)</span>
+              &nbsp; {`Follow ${article.author.username}`} <span className="counter">(10)</span>
             </button>
             &nbsp;&nbsp;
             <button className="btn btn-sm btn-outline-primary">
               <i className="ion-heart"></i>
-              &nbsp; Favorite Post <span className="counter">(29)</span>
+              &nbsp; Favorite Post <span className="counter">({article.favoritesCount})</span>
             </button>
             <button className="btn btn-sm btn-outline-secondary">
               <i className="ion-edit"></i> Edit Article

@@ -10,6 +10,7 @@ function Register(){
    const onFormSubmit=async(data)=>{
       try{
          const response =await apiClient.post('/users',{user:data});
+         console.log('User object from registration API:', response.data.user);
          login(response.data.user,response.data.user.token);
       }
       catch(error){

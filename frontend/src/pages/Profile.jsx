@@ -1,14 +1,36 @@
 import React from 'react';
-import { Link, NavLink,useParams,useLocation, data } from 'react-router-dom';
+import { Link, NavLink,useParams,useLocation } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
-import {useQuery} from '@tanstack/react-query';
+import {useQuery,useMutation,useQueryClient} from '@tanstack/react-query';
 import apiClient from '../apiClient';
+import { mockArticles } from '../data/mockData';
 function Profile() {
+  const queryClient = useQueryClient();
   const{user} = useAuth();
   const userName = user?.username || '';
   const cur_userName = useParams().username;
   const isFavoritesPage = useLocation().pathname.endsWith('/favorites');
+  const mutateLike =useMutation({
+      mutationFn : ({slug,favorited})=> {!favorited? apiClient.post(`/articles/${slug}/favorite`)
+        :apiClient.delete(`/articles/${slug}/favorite`);
+      },
+      onSuccess : () => {
+        queryClient.invalidateQueries({queryKey:['articles',cur_userName,isFavoritesPage]});
+      },
+    });
+const mutateFollow = useMutation({
+    mutationFn :({username,following})=>{
+      !following? apiClient.post(`/profiles/${username}/follow`):
+      apiClient.delete(`/profiles/${username}/follow`);
+    },
+    onSuccess : () => {
+      queryClient.invalidateQueries({queryKey:['profile',cur_userName]});
+    }
+});
   const fetchArticles = async(cur_userName)=>{
+    if(import.meta.env.DEV&&userName=== 'test'){
+      return mockArticles;
+    }
     const {data} =isFavoritesPage
     ? await apiClient.get(`/articles?favorited=${cur_userName}`)
     : await apiClient.get(`/articles?author=${cur_userName}`);
@@ -34,11 +56,17 @@ function Profile() {
     queryKey:['profile',cur_userName],
     queryFn:()=>fetchProfile(cur_userName),
   });
-  if(isProfileLoading){
+  const handleLike = async(article)=>{
+    mutateLike.mutate({slug:article.slug,favorited:article.favorited});
+  };
+  const handleFollow = async()=>{
+    mutateFollow.mutate({username:cur_userName,following:profile.following});
+  }
+  if(isProfileLoading||areAriticleLoading){
     return <div>Loading...</div>;
   }
-  if(isProfileError){
-    return <div>Error loading profile.</div>;
+  if(isProfileError||areAriticleError){
+    return <div>Error</div>;
   }
   return (
     <div className="profile-page">
@@ -52,7 +80,7 @@ function Profile() {
                 {profile.bio}
               </p>
               {userName !== profile.username ?(
-              <button className="btn btn-sm btn-outline-secondary action-btn">
+              <button className="btn btn-sm btn-outline-secondary action-btn" onClick={handleFollow} disabled={mutateFollow.isLoading}>
                 <i className="ion-plus-round"></i>
                 &nbsp; {!profile.following?(`Follow ${cur_userName}`):`Unfollow ${cur_userName}`}
               </button>
@@ -91,58 +119,33 @@ function Profile() {
                 </li>
               </ul>
             </div>
-            {!import.meta.env.DEV&&userName=== 'test'?(
-              <div>
-                hello world
+              {articles.length==0?(
+                <div>No articles are here... yet.</div>
+              ):(
+              articles.map((article)=>(
+                <div className="article-preview" key={article.slug}>
+                  <div className="article-meta">
+                    <Link to={`/profile/${article.author.username}`}><img src={article.author.image} alt="Article author" /></Link>
+                    <div className="info">
+                      <Link to={`/profile/${article.author.username}`} className="author">{article.author.username}</Link>
+                      <span className="date">{new Date(article.createdAt).toDateString()}</span>
+                    </div>
+                    <button disabled={mutateLike.isLoading} className="btn btn-outline-primary btn-sm pull-xs-right">
+                      <i className="ion-heart" onClick={()=>handleLike(article)} ></i> {article.favoritesCount}
+                    </button>
+                  </div>
+                  <Link to={`/article/${article.slug}`} className='preview-link'>
+                    <h1>{article.title}</h1>
+                    <p>{article.description}</p>
+                    <span>Read more...</span>
+                    <ul className="tag-list">
+                      {article.tagList.map((tag)=>(
+                        <li className="tag-default tag-pill tag-outline" key={tag}>{tag}</li>
+                      ))}
+                    </ul>
+                  </Link>
                 </div>
-            ):(
-              <>
-            <div className="article-preview">
-              <div className="article-meta">
-                <Link to="/profile/eric-simons"><img src="http://i.imgur.com/Qr71crq.jpg" alt="Article author" /></Link>
-                <div className="info">
-                  <Link to="/profile/eric-simons" className="author">Eric Simons</Link>
-                  <span className="date">January 20th</span>
-                </div>
-                <button className="btn btn-outline-primary btn-sm pull-xs-right">
-                  <i className="ion-heart"></i> 29
-                </button>
-              </div>
-              <Link to="/article/how-to-buil-webapps-that-scale" className="preview-link">
-                <h1>How to build webapps that scale</h1>
-                <p>This is the description for the post.</p>
-                <span>Read more...</span>
-                <ul className="tag-list">
-                  <li className="tag-default tag-pill tag-outline">realworld</li>
-                  <li className="tag-default tag-pill tag-outline">implementations</li>
-                </ul>
-              </Link>
-            </div>
-
-            <div className="article-preview">
-              <div className="article-meta">
-                <Link to="/profile/albert-pai"><img src="http://i.imgur.com/N4VcUeJ.jpg" alt="Article author" /></Link>
-                <div className="info">
-                  <Link to="/profile/albert-pai" className="author">Albert Pai</Link>
-                  <span className="date">January 20th</span>
-                </div>
-                <button className="btn btn-outline-primary btn-sm pull-xs-right">
-                  <i className="ion-heart"></i> 32
-                </button>
-              </div>
-              <Link to="/article/the-song-you" className="preview-link">
-                <h1>The song you won't ever stop singing. No matter how hard you try.</h1>
-                <p>This is the description for the post.</p>
-                <span>Read more...</span>
-                <ul className="tag-list">
-                  <li className="tag-default tag-pill tag-outline">Music</li>
-                  <li className="tag-default tag-pill tag-outline">Song</li>
-                </ul>
-              </Link>
-            </div>
-            </>
-            )}
-
+              )))}
             <ul className="pagination">
               <li className="page-item active">
                 <Link className="page-link" to="?page=1">1</Link>

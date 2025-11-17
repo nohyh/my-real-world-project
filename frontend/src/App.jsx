@@ -22,7 +22,8 @@ function App() {
            <Route path='/login' element={<Login/>}></Route>
            <Route path="/register" element={<Register/>}></Route>
            <Route path="/profile/:username" element={<Profile/>}></Route>
-           <Route path ='/Article' element={<Article/>}></Route>
+           <Route path='/profile/:username/favorites' element={<Profile/>}></Route>
+           <Route path ='/Article/:slug' element={<Article/>}></Route>
            <Route element={<ProtectedRoute/>}>
             <Route path="/settings" element={<Settings/>}></Route>
             <Route path="/editor" element={<NewArticle/>}></Route>

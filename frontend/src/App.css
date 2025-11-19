@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+.nav-link {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.nav-link:focus {
+    outline: none;
+}

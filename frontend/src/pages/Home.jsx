@@ -1,8 +1,31 @@
-import { Link,NavLink } from "react-router-dom"
-
+import { Link,NavLink ,useNavigate} from "react-router-dom"
+import { useAuth } from "../context/AuthContext";
+import{useQuery} from '@tanstack/react-query';
+import apiClient from '../apiClient';
+import {useState} from 'react';
+import useLikeArticle from '../hooks/useLikeArticle';
 function Home(){
-    const userId =55656
-    const Username ='nohyh'
+    const navigate = useNavigate();
+     const{user} = useAuth();
+    const [isMyFeed,setIsMyFeed] = useState(false);
+    const userName = user?.username || '';
+    const {handleLike} = useLikeArticle(['articles',userName,isMyFeed]);
+    const fetchArticles = async(userName)=>{
+        const {data} = isMyFeed
+        ? await apiClient.get(`/articles/feed`)
+        : await apiClient.get('/articles');
+        return data.articles;
+    }
+    const {data:articles,isLoading:areAriticleLoading,isError:areAriticleError} = useQuery({
+        queryKey:['articles',userName,isMyFeed],
+        queryFn:()=>fetchArticles(userName),
+    });
+    if(areAriticleLoading){
+        return <div>Loading articles...</div>;
+    }
+    if(areAriticleError){
+        return <div>Error loading articles.</div>;
+    }
     return(
     <>
     <div className="home-page">
@@ -17,34 +40,37 @@ function Home(){
                 <div className="feed-toggle">
                     <ul className="nav nav-pills outline-active">
                         <li className="nav-item">
-                            <NavLink className="nav-link" >Your Feed</NavLink>
+                            <button className={`nav-link ${isMyFeed?"active":""}`} onClick={userName?()=>setIsMyFeed(true):()=>navigate('/login')}>Your Feed</button>
                         </li>
                          <li className="nav-item">
-                            <NavLink className="nav-link">Global Feed</NavLink>
+                            <button className={`nav-link ${isMyFeed?"":"active"}`} onClick={()=>setIsMyFeed(false)}>Global Feed</button>
                         </li>
                     </ul>
                 </div>
-                <div className="article-preview">
-                    <div className="article-meta">
-                        <Link to={`/profile/${userId}`} ><img src="http://i.imgur.com/Qr71crq.jpg" /></Link>
-                        <div className="info">
-                            <Link to= {`/profile/${userId}`} className="author">{Username}</Link>
-                            <span className="date" > January 20th</span>
+                {articles.map((article)=>(
+                    <div className="article-preview" key={article.slug}>
+                        <div className="article-meta">
+                            <Link to={`/profile/${article.author.username}`}><img src={article.author.image} alt="Article author" /></Link>
+                            <div className="info">
+                                <Link to={`/profile/${article.author.username}`} className="author">{article.author.username}</Link>
+                                <span className="date">{new Date(article.createdAt).toDateString()}</span>
+                            </div>
+                            <button className="btn btn-outline-primary btn-sm pull-xs-right" onClick={()=>handleLike({slug:article.slug,favorited:article.favorited})}>
+                                <i className="ion-heart"></i> {article.favoritesCount}
+                            </button>
+                            <Link to={`/article/${article.slug}`} className='preview-link'>
+                                <h1>{article.title}</h1>
+                                <p>{article.description}</p>
+                                <span>Read more...</span>   
+                                <ul className="tag-list">
+                                    {article.tagList.map((tag)=>{
+                                        <li className="tag-default tag-pill tag-outline" key={tag}>{tag}</li>
+                                    })}
+                                </ul>
+                            </Link>
                         </div>
-                        <button class="btn btn-outline-primary btn-sm pull-xs-right">
-                        <i className="ion-heart"></i>20
-                        </button>
                     </div>
-                    <Link className="preview-link">
-                        <h1> to to build webapps that scale</h1>
-                        <p> this is the description for the post</p>
-                        <span> read more...</span>
-                        <ul className="tag-list">
-                            <li className="tag-default tag-pill tag-outline">realworld</li>
-                             <li className="tag-default tag-pill tag-outline">implementations</li>
-                        </ul>
-                    </Link>
-                </div>
+                ))} 
                 <ul className="pagination">
                     <li class="page-item">
                         <NavLink className="page-link" to="">1</NavLink>

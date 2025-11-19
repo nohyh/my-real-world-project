@@ -12,7 +12,6 @@ import NewArticle from './pages/NewArticle'
 import Article from './pages/Article'
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 function App() {
-  const userId =1;
   return (
     <>
       <div>

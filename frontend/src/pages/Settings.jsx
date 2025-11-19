@@ -1,11 +1,13 @@
 import { useAuth} from "../context/AuthContext";
 import{useForm } from 'react-hook-form'
 import { useNavigate } from "react-router-dom";
-function Settings({setIslogin}){
+import { useState } from "react";
+import apiClient from "../apiClient";
+function Settings(){
    const {logout} =useAuth();
    const navigate =useNavigate();
    const {register,handleSubmit,formState:{isValid}} =useForm({mode:'onChange'});
-   cosnt[ errorMessage,setErrorMessage ]=useState('');
+   const[ errorMessage,setErrorMessage ]=useState('');
    const onFormSubmit =async(data)=>{
     try{
       const response =await apiClient.put('/user',{user:data})
@@ -56,7 +58,7 @@ function Settings({setIslogin}){
                  {...register('password',{required:true})}
               />
             </fieldset>
-            <button className="btn btn-lg btn-primary pull-xs-right" disabled={!isValid}>Update Settings</button>
+            <button className="btn btn-lg btn-primary pull-xs-right" >Update Settings</button>
           </fieldset>
         </form>
         <hr />

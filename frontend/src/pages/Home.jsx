@@ -6,7 +6,7 @@ import {useState} from 'react';
 import useLikeArticle from '../hooks/useLikeArticle';
 function Home(){
     const navigate = useNavigate();
-     const{user} = useAuth();
+     const{user,isLogin} = useAuth();
     const [isMyFeed,setIsMyFeed] = useState(false);
     const userName = user?.username || '';
     const {handleLike} = useLikeArticle(['articles',userName,isMyFeed]);
@@ -55,7 +55,7 @@ function Home(){
                                 <Link to={`/profile/${article.author.username}`} className="author">{article.author.username}</Link>
                                 <span className="date">{new Date(article.createdAt).toDateString()}</span>
                             </div>
-                            <button className="btn btn-outline-primary btn-sm pull-xs-right" onClick={()=>handleLike({slug:article.slug,favorited:article.favorited})}>
+                            <button className="btn btn-outline-primary btn-sm pull-xs-right" onClick={isLogin?()=>handleLike({slug:article.slug,favorited:article.favorited}):()=>navigate('/login')}>
                                 <i className="ion-heart"></i> {article.favoritesCount}
                             </button>
                             <Link to={`/article/${article.slug}`} className='preview-link'>

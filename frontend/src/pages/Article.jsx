@@ -1,19 +1,21 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../apiClient';
 import { useQuery } from '@tanstack/react-query';
-import  useFollw from '../hooks/useFollow';
 import useLikeArticle from '../hooks/useLikeArticle';
+import useFollow from '../hooks/useFollow';
+import Comment from '../components/Comment';
 function Article() {
-  const { user } = useAuth();
+  const navigate =useNavigate();
+  const { user,isLogin} = useAuth();
   const userName = user?.username || '';
   const { slug } = useParams();
-
+  const {handleLike,...mutateLike} = useLikeArticle(['article',slug]);
+  const {handleFollow,...mutateFollow} = useFollow(['article',slug]);
   const fetchArticle = async (slug) => {
     const { data } = await apiClient.get(`/articles/${slug}`);
     return data.article;
   };
-
   const {
     data: article,
     isLoading: isArticleLoading,
@@ -22,8 +24,6 @@ function Article() {
     queryKey: ['article', slug],
     queryFn: () => fetchArticle(slug),
   });
-
-
   if (isArticleLoading) {
     return <div>Loading article...</div>;
   }
@@ -31,7 +31,16 @@ function Article() {
   if (isArticleError) {
     return <div>Error loading article.</div>;
   }
-
+const deleteArticle = async(slug)=>{
+  try{
+    const response = await apiClient.delete(`/articles/${slug}`);
+    console.log(response.data);
+    navigate('/');
+  }
+  catch(error){
+    console.log(error);
+  }
+}
   const isAuthor = userName === article.author.username;
   return (
     <div className="article-page">
@@ -48,21 +57,22 @@ function Article() {
               </Link>
               <span className="date">{new Date(article.createdAt).toDateString()}</span>
             </div>
-            <button className="btn btn-sm btn-outline-secondary">
-              <i className="ion-plus-round"></i>
-              &nbsp; {`Follow ${article.author.username}`} <span className="counter">(10)</span>
-            </button>
-            &nbsp;&nbsp;
-            <button className="btn btn-sm btn-outline-primary">
+            <button className="btn btn-sm btn-outline-primary" onClick={isLogin?()=>handleLike({slug:article.slug,favorited:article.favorited}):()=>navigate('/login')}>
               <i className="ion-heart"></i>
-              &nbsp; Favorite Post <span className="counter">({article.favoritesCount})</span>
+              &nbsp; Favorite Article <span className="counter">({article.favoritesCount})</span>
             </button>
-            <button className="btn btn-sm btn-outline-secondary">
+            {!isAuthor?<button className="btn btn-sm btn-outline-secondary" onClick={isLogin?()=>handleFollow({username:article.author.username,following:article.author.following}):()=>navigate('/login')}>
+              <i className="ion-plus-round"></i>
+               &nbsp; {article.author.following?`Unfollow ${article.author.username}`:`Follow ${article.author.username}`}
+            </button>:(
+              <>
+            <button className="btn btn-sm btn-outline-secondary" onClick={()=>navigate(`/editor/${article.slug}`)}>
               <i className="ion-edit"></i> Edit Article
             </button>
-            <button className="btn btn-sm btn-outline-danger">
+            <button className="btn btn-sm btn-outline-danger" onClick={()=>deleteArticle(article.slug)}  >
               <i className="ion-trash-a"></i> Delete Article
             </button>
+              </>)}
           </div>
         </div>
       </div>
@@ -92,71 +102,25 @@ function Article() {
               </Link>
               <span className="date">{new Date(article.createdAt).toDateString()}</span>
             </div>
-            <button className="btn btn-sm btn-outline-secondary">
-              <i className="ion-plus-round"></i>
-              &nbsp; {`Follow ${article.author.username}`} 
-            </button>
-            &nbsp;
-            <button className="btn btn-sm btn-outline-primary">
+            <button className="btn btn-sm btn-outline-primary" onClick={isLogin?()=>handleLike({slug:article.slug,favorited:article.favorited}):()=>navigate('/login')}>
               <i className="ion-heart"></i>
-              &nbsp; Favorite Article <span className="counter">(29)</span>
+              &nbsp; Favorite Article <span className="counter">({article.favoritesCount})</span>
             </button>
-            <button className="btn btn-sm btn-outline-secondary">
+            {!isAuthor?<button className="btn btn-sm btn-outline-secondary" onClick={isLogin?()=>handleFollow({username:article.author.username,following:article.author.following}):()=>navigate('/login')}>
+              <i className="ion-plus-round"></i>
+               &nbsp; {article.author.following?`Unfollow ${article.author.username}`:`Follow ${article.author.username}`}
+            </button>:(
+              <>
+            <button className="btn btn-sm btn-outline-secondary" onClick={()=>navigate(`/editor/${article.slug}`)}>
               <i className="ion-edit"></i> Edit Article
             </button>
-            <button className="btn btn-sm btn-outline-danger">
+            <button className="btn btn-sm btn-outline-danger" onClick={()=>deleteArticle(article.slug)}  >
               <i className="ion-trash-a"></i> Delete Article
             </button>
+              </>)}
           </div>
         </div>
-
-        <div className="row">
-          <div className="col-xs-12 col-md-8 offset-md-2">
-            <form className="card comment-form">
-              <div className="card-block">
-                <textarea
-                  className="form-control"
-                  placeholder="Write a comment..."
-                  rows="3"
-                ></textarea>
-              </div>
-              <div className="card-footer">
-                <img
-                  src="http://i.imgur.com/Qr71crq.jpg"
-                  className="comment-author-img"
-                  alt="Comment author"
-                />
-                <button className="btn btn-sm btn-primary">Post Comment</button>
-              </div>
-            </form>
-            {}
-            <div className="card">
-              <div className="card-block">
-                <p className="card-text">
-                  With supporting text below as a natural lead-in to additional
-                  content.
-                </p>
-              </div>
-              <div className="card-footer">
-                <Link to="/profile/author" className="comment-author">
-                  <img
-                    src="http://i.imgur.com/Qr71crq.jpg"
-                    className="comment-author-img"
-                    alt="Comment author"
-                  />
-                </Link>
-                &nbsp;
-                <Link to="/profile/jacob-schmidt" className="comment-author">
-                  Jacob Schmidt
-                </Link>
-                <span className="date-posted">Dec 29th</span>
-                <span className="mod-options">
-                  <i className="ion-trash-a"></i>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Comment slug={article.slug}/>
       </div>
     </div>
   );

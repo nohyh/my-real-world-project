@@ -1,4 +1,4 @@
-import { Link, NavLink,useParams,useLocation } from 'react-router-dom';
+import { Link, NavLink,useParams,useLocation,useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 import {useQuery,useMutation,useQueryClient} from '@tanstack/react-query';
 import apiClient from '../apiClient';
@@ -6,13 +6,14 @@ import useLikeArticle from '../hooks/useLikeArticle';
 import useFollow from '../hooks/useFollow';
 function Profile() {
   const queryClient = useQueryClient();
-  const{user} = useAuth();
+  const navigate =useNavigate();
+  const{user,isLogin} = useAuth();
   const userName = user?.username || '';
   const cur_userName = useParams().username;
   //we need to know if we are on favorites page to fetch accordingly
   const isFavoritesPage = useLocation().pathname.endsWith('/favorites');
   //use custom hook for like article and follow user
-  const {handleLike,...mutateLike} = useLikeArticle(['profile',cur_userName,isFavoritesPage]);
+  const {handleLike,...mutateLike} = useLikeArticle(['articles',cur_userName,isFavoritesPage]);
   const {handleFollow,...mutateFollow}= useFollow(['profile',cur_userName]);
 
   const fetchArticles = async(cur_userName)=>{
@@ -53,12 +54,12 @@ function Profile() {
                 {profile.bio}
               </p>
               {userName !== profile.username ?(
-              <button className="btn btn-sm btn-outline-secondary action-btn" onClick={()=>handleFollow({username:profile.username,following:profile.following})} disabled={mutateFollow.isPending}>
+              <button className="btn btn-sm btn-outline-secondary action-btn" onClick={isLogin?()=>handleFollow({username:profile.username,following:profile.following}):()=>navigate('/login')} disabled={mutateFollow.isPending}>
                 <i className="ion-plus-round"></i>
                 &nbsp; {!profile.following?(`Follow ${cur_userName}`):`Unfollow ${cur_userName}`}
               </button>
               ):(
-              <button className="btn btn-sm btn-outline-secondary action-btn">
+              <button className="btn btn-sm btn-outline-secondary action-btn" onClick={()=>navigate('/settings')}>
                 <i className="ion-gear-a"></i>
                 &nbsp; Edit Profile Settings
               </button>
@@ -76,7 +77,7 @@ function Profile() {
                 <li className="nav-item">
                   <NavLink
                     className="nav-link"
-                    to={`/profile/${userName}`}
+                    to={`/profile/${cur_userName}`}
                     end
                   >
                     My Articles
@@ -85,7 +86,7 @@ function Profile() {
                 <li className="nav-item">
                   <NavLink
                     className="nav-link"
-                    to={`/profile/${userName}/favorites`}
+                    to={`/profile/${cur_userName}/favorites`}
                   >
                     Favorited Articles
                   </NavLink>
@@ -103,7 +104,7 @@ function Profile() {
                       <Link to={`/profile/${article.author.username}`} className="author">{article.author.username}</Link>
                       <span className="date">{new Date(article.createdAt).toDateString()}</span>
                     </div>
-                    <button disabled={mutateLike.isPending} className="btn btn-outline-primary btn-sm pull-xs-right"  onClick={()=>handleLike({slug:article.slug,favorited:article.favorited})}>
+                    <button disabled={mutateLike.isPending} className="btn btn-outline-primary btn-sm pull-xs-right"  onClick={isLogin?()=>handleLike({slug:article.slug,favorited:article.favorited}):()=>navigate('/login')}>
                       <i className="ion-heart" ></i> {article.favoritesCount}
                     </button>
                   </div>

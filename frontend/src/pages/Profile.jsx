@@ -4,12 +4,16 @@ import {useQuery,useMutation,useQueryClient} from '@tanstack/react-query';
 import apiClient from '../apiClient';
 import useLikeArticle from '../hooks/useLikeArticle';
 import useFollow from '../hooks/useFollow';
+import { useState,useEffect } from 'react';
 function Profile() {
   const queryClient = useQueryClient();
   const navigate =useNavigate();
   const{user,isLogin} = useAuth();
   const userName = user?.username || '';
   const cur_userName = useParams().username;
+  const limit = 5;
+   const [currentPage, setCurrentPage] = useState(1);
+   const [totalPage, setTotalPage] = useState(0);
   //we need to know if we are on favorites page to fetch accordingly
   const isFavoritesPage = useLocation().pathname.endsWith('/favorites');
   //use custom hook for like article and follow user
@@ -17,18 +21,19 @@ function Profile() {
   const {handleFollow,...mutateFollow}= useFollow(['profile',cur_userName]);
 
   const fetchArticles = async(cur_userName)=>{
+    const offset = (currentPage - 1) * limit;
     const {data} =isFavoritesPage
-    ? await apiClient.get(`/articles?favorited=${cur_userName}`)
-    : await apiClient.get(`/articles?author=${cur_userName}`);
+    ? await apiClient.get(`/articles?favorited=${cur_userName}&offset=${offset}&limit=${limit}`)
+    : await apiClient.get(`/articles?author=${cur_userName}&offset=${offset}&limit=${limit}`);
+    setTotalPage(Math.ceil(data.articlesCount / limit));
     return data.articles;
   };
   const {data:articles,isLoading:areAriticleLoading,isError:areAriticleError} = useQuery({
-    queryKey:['articles',cur_userName,isFavoritesPage],
+    queryKey:['articles',cur_userName,isFavoritesPage,currentPage],
     queryFn:()=>fetchArticles(cur_userName),
   });
   
   const fetchProfile = async(cur_userName)=>{
-
     const {data} =await apiClient.get(`/profiles/${cur_userName}`);
     return data.profile;
   }
@@ -36,6 +41,9 @@ function Profile() {
     queryKey:['profile',cur_userName],
     queryFn:()=>fetchProfile(cur_userName),
   });
+    useEffect(()=>{
+    setCurrentPage(1);
+  },[isFavoritesPage]);
   if(isProfileLoading||areAriticleLoading){
     return <div>Loading...</div>;
   }
@@ -121,12 +129,11 @@ function Profile() {
                 </div>
               )))}
             <ul className="pagination">
-              <li className="page-item active">
-                <Link className="page-link" to="?page=1">1</Link>
-              </li>
-              <li className="page-item">
-                <Link className="page-link" to="?page=2">2</Link>
-              </li>
+               {Array.from({ length: totalPage }, (_, index) => index + 1).map((page) => (
+                    <li className="page-item" key={page}>
+                        <NavLink className="page-link" onClick={() => setCurrentPage(page)}>{page}</NavLink>
+                    </li>
+                ))}
             </ul>
           </div>
         </div>

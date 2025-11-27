@@ -1,10 +1,20 @@
 import React from 'react';
 import { useForm, useWatch } from 'react-hook-form'
 import apiClient from '../apiClient';
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import{useQuery} from '@tanstack/react-query'
 function NewArticle() {
-  const { register, handleSubmit, control, formState: { error, isValid } } = useForm({ mode: 'onChange' });
   const navigate = useNavigate();
+  const slug = useParams().slug;
+  const fetchArticle = async(slug)=>{
+     const {data} = await apiClient.get(`/articles/${slug}`);
+    return data.article;
+  }
+  const {data:article,isLoading:isArticleLoading,isError:isArticleError} = useQuery({
+    queryKey:['article',slug],
+    queryFn: ()=>fetchArticle(slug),
+    enabled: !!slug
+  })
   const onFormSubmit = async (data) => {
     const tagList = data.tags ? data.tags.split(',').map(t => t.trim()).filter(t => t) : [];
     const requestBody = {
@@ -16,7 +26,7 @@ function NewArticle() {
       }
     }
     try {
-      const { data: { article } } = await apiClient.post('/articles', requestBody);
+      const { data: { article } } = slug?await apiClient.put(`/articles/${slug}`, requestBody):await apiClient.post('/articles', requestBody);
       navigate(`/article/${article.slug}`);
     }
     catch (error) {
@@ -38,6 +48,20 @@ function NewArticle() {
       </div>
     );
   };
+   const { register, handleSubmit, control, formState: { error, isValid } } = useForm({ mode: 'onChange',
+    values:slug?{
+      title:article.title,
+      description:article.description,
+      body:article.body,
+      tags:article.tagList.join(',')
+    }:
+    {
+      title:'',
+      description:'',
+      body:'',
+      tags:''
+    }
+  });
   return (
     <div className="editor-page">
       <div className="container page">
@@ -86,7 +110,7 @@ function NewArticle() {
                   type="submit"
                   disabled={!isValid}
                 >
-                  Publish Article
+                  {slug?'Update Article':'Publish Article'}
                 </button>
               </fieldset>
             </form>

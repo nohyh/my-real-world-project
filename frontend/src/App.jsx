@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import './App.css'
 import Head from './components/Head'
 import Footer  from './components/Footer'
@@ -26,6 +25,7 @@ function App() {
            <Route element={<ProtectedRoute/>}>
             <Route path="/settings" element={<Settings/>}></Route>
             <Route path="/editor" element={<NewArticle/>}></Route>
+            <Route path="/editor/:slug" element={<NewArticle/>}></Route>
             </Route>
           </Routes>
         <Footer/>

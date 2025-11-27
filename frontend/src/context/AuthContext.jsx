@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, use } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "../apiClient";
 const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         setIsLogin(false);
         navigate('/');
     }
-    const updateUser=(newUser)=>{
+    const updateUser = (newUser) => {
         setUser(newUser);
     }
     const value = {
@@ -29,6 +30,23 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser
     };
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return;
+        }
+        const fetchUser = async () => {
+            try {
+                const response = await apiClient.get('/user');
+                setUser(response.data.user);
+                setIsLogin(true);
+            } catch (error) {
+                console.log(error);
+                logout();
+            }
+        };
+        fetchUser();
+    }, []);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export const useAuth = () => {

@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import apiClient from '../apiClient';
 import { useState } from 'react';
 import useLikeArticle from '../hooks/useLikeArticle';
-import { set } from "react-hook-form";
+import ArticleList from '../components/ArticleList';
+import Pagination from '../components/Pagination';
 function Home() {
     const navigate = useNavigate();
     const { user, isLogin } = useAuth();
@@ -87,43 +88,8 @@ function Home() {
                                 )}
                             </ul>
                         </div>
-                        {isLoading ? (
-                            <div>Loading articles...</div>
-                        ) : isError ? (
-                            <div>Error loading articles.</div>
-                        ) : (
-                            articles.map((article) => (
-                                <div className="article-preview" key={article.slug}>
-                                    <div className="article-meta">
-                                        <Link to={`/profile/${article.author.username}`}><img src={article.author.image} alt="Article author" /></Link>
-                                        <div className="info">
-                                            <Link to={`/profile/${article.author.username}`} className="author">{article.author.username}</Link>
-                                            <span className="date">{new Date(article.createdAt).toDateString()}</span>
-                                        </div>
-                                        <button className="btn btn-outline-primary btn-sm pull-xs-right" onClick={isLogin ? () => handleLike({ slug: article.slug, favorited: article.favorited }) : () => navigate('/login')}>
-                                            <i className="ion-heart"></i> {article.favoritesCount}
-                                        </button>
-                                        <div className="spacer"></div>
-                                        <Link to={`/article/${article.slug}`} className='preview-link'>
-                                            <h1>{article.title}</h1>
-                                            <p>{article.description}</p>
-                                            <span>Read more...</span>
-                                            <ul className="tag-list">
-                                                {article.tagList.map((tag) => (
-                                                    <li className="tag-default tag-pill tag-outline" key={tag}>{tag}</li>
-                                                ))}
-                                            </ul>
-                                        </Link>
-                                    </div>
-                                </div>
-                            )))}
-                        <ul className="pagination">
-                            {Array.from({ length: totalPage }, (_, index) => index + 1).map((page) => (
-                                <li className="page-item" key={page}>
-                                    <NavLink className="page-link" onClick={() => setCurrentPage(page)}>{page}</NavLink>
-                                </li>
-                            ))}
-                        </ul>
+                        <ArticleList articles={articles} isLoading={isLoading} isError={isError} handleLike={handleLike} navigate={navigate} />
+                        <Pagination totalPage={totalPage} setCurrentPage={setCurrentPage} />
                     </div>
                     <div className="col-md-3">
                         <div className="sidebar">

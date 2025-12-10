@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-
+const apiRoutes = require('./src/routes/api');
 const app = express();
 app.use(cors()); // 启用 CORS
 app.use(express.json()); // 解析 JSON 请求体
-
+app.use('/api', apiRoutes);
 app.get('/', (req, res) => {
   res.send('RealWorld Backend is running!');
 });
